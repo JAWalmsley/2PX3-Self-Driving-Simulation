@@ -80,6 +80,7 @@ class Simulation:
     def __init__(self, total_arrivals, mean_arrival_time):
         self.num_of_arrivals = 0
         self.total_arrivals = total_arrivals
+        self.num_of_departures = 0
         self.upper_arrival_time = 2 * mean_arrival_time
         self.clock = 0
 
@@ -104,7 +105,7 @@ class Simulation:
     
     #Method that runs the simulation
     def run(self):
-        while self.num_of_arrivals <= self.total_arrivals:
+        while self.num_of_departures <= self.total_arrivals:
             if self.print_events:
                 self.print_state()
             self.execute_next_event()
@@ -124,6 +125,7 @@ class Simulation:
 
     #Driver leaving intersection event
     def execute_departure(self, event):
+        self.num_of_departures += 1
         if self.print_events:
             print(str(self.clock)+ ": A driver from the " + event.direction + " has cleared the intersection.")
 
@@ -326,8 +328,9 @@ def average(L):
 # s = Simulation(10000)
 # s.run()
 
-
-for i in range(10, 500, 5):
-    print(i, "\t", end="")
-    s = Simulation(1000, i)
+# s = Simulation(100, 1)
+# s.run()
+for i in range(1, 30, 1):
+    print(i, ", ", end="")
+    s = Simulation(10000, i)
     s.run()
