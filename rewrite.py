@@ -4,6 +4,7 @@ import random
 ARRIVAL = "Arrival"
 DEPARTURE = "Departure"
 STOP = "Stop"
+CLEAR = "Clear"
 N = "North"
 E = "East"
 S = "South"
@@ -39,18 +40,25 @@ class SelfDriver(Driver):
         return self.min_clear_time
 
 
-class Event:
+class Road:
+    def __init__(self, direction):
+        self.direction: str = direction
+        self.ready: bool = False
+        self.waiting_cars: list[Driver] = []
 
-    def __init__(self, event_type, time, direction):
-        self.type = event_type
+
+class Event:
+    def __init__(self, event_type: str, road: Road, driver: Driver, time: int):
+        self.event_type: str = event_type
+        self.road: Road = road
+        self.driver = Driver
         self.time = time
-        self.direction = direction
 
 
 class EventQueue:
 
     def __init__(self):
-        self.events = []
+        self.events: list[Event] = []
 
     # Add event (will get sent to the back of the queue)
     def add_event(self, event):
@@ -71,42 +79,37 @@ class EventQueue:
         return event
 
 
-class Road:
-    def __init__(self, direction):
-        self.direction = direction
-        self.ready = False
-
-
 class Simulation:
-    def __init__(self, total_arrivals, mean_arrival_time):
-        self.num_of_arrivals = 0
-        self.num_of_departures = 0
-        self.total_arrivals = total_arrivals
-        self.upper_arrival_time = 2 * mean_arrival_time
+    def __init__(self, num_arrivals, mean_arrival_time):
+        self.num_arrivals = num_arrivals
+        self.mean_arrival_time = mean_arrival_time
+        self.roads = [Road(N), Road(E), Road(S), Road(W)]
         self.clock = 0
-        self.roads = {N: Road("N"),
-                      E: Road("E"),
-                      S: Road("S"),
-                      W: Road("W")}
-
-        self.intersection_free = True
-        self.print_events = False
-        self.events = EventQueue()
-        self.data = []
-
+        self.intersection_clear = True
+        self.event_queue = EventQueue()
+        self.generate_events()
+    
     def run(self):
-        while self.num_of_departures <= self.total_arrivals:
-            if self.print_events:
-                self.print_state()
-            self.execute_next_event()
-        self.generate_report()
+        self.event_queue.sort(key=lambda x: x.time)
+        event: Event = self.event_queue.get_next_event()
+        if(event.event_type == ARRIVAL):
+            if(self.intersection_clear):
+                self.intersection_clear = False
+                self.event_queue.add_event(Event(CLEAR, event.road, event.driver, self.clock + event.driver.get_clear_time()))
+            else:
+                event.driver.arrival_time = self.clock
+                self.event_queue.add_event(Event(STOP, event.road, event.driver, self.clock + event.driver.get_stop_time()))
+                event.road.waiting_cars.append(event.driver)
+            
+    
+    def generate_events(self):
+        next_arrival_time = 0
+        for i in range(self.num_arrivals):
+            next_arrival_time += random.expovariate(1 / self.mean_arrival_time)
+            self.event_queue.add_event(Event(ARRIVAL, random.randrange(self.roads), Driver("Driver " + str(i), next_arrival_time)))
+        
+        
 
-    def execute_next_event(self):
-        event = self.events.get_next_event()
-        self.clock = event.time
-        if event.type == ARRIVAL:
-            self.execute_arrival(event)
-        if event.type == DEPARTURE:
-            self.execute_departure(event)
-        if event.type == STOP:
-            self.execute_stop(event)
+
+s = Simulation(10000, 10)
+s.run()
