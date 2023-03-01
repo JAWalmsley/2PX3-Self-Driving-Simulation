@@ -154,13 +154,15 @@ class Simulation:
                 d = SelfDriver(last_time)
             arrival = Event(last_time,
                             ARRIVAL,
-                            Driver(last_time),
+                            d,
                             random.choice(self.roads), 0)
             self.events.append(arrival)
             last_time += int(random.expovariate(1/self.mean_arrival_time))
 
-
-for i in range(1, 30, 1):
-    print(i, ",", end="")
-    s = Simulation(1000, i, 20, 0)
-    print(s.run())
+for sd in range(0, 100, 20):
+    print("self-driving percent:", sd, "%")
+    for i in range(1, 30, 5):
+        print(i, ", ", sep="", end="")
+        s = Simulation(1000, i, 20, sd)
+        print(s.run())
+    print("\n")
